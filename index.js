@@ -67,10 +67,8 @@ var processQueue = function(){
 var reconClient = function(socket, id){
 	socket.id = id;
 	var client = clients[id.trim()];
-	if(client) {
-		//if(!client.socket) 
+	if(client)
 			client.socket = socket;		
-	}
 	else
 		console.log("not found on clients list");
 	return client;

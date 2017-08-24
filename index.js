@@ -3,39 +3,6 @@ var server = net.createServer();
 var clients = {};
 var msgQueue = {};
 var ms = 1000;
-//msgQueue["roomIdHere"]=[];//object
-//server queue cleanup
-
-///chat on G screen //is now disabled
-///challenged is not pushed to available after challenged canceled
-//exitApp still doesn't work sometimes
-//^check onDisabled for GM or Client, maybe it will work
-//when GM is not ready while loading board, opponent ready will error
-//auto recon from login
-//login again when no username found
-///challenges dailog should only be displayed on the gamerooms
-///timer during sleep awake
-///on playerprefs, should not display recon
-
-/// dialog on menu screen
-///queue all broadcastroom in client //no, board is now disabled when disconnect
-///scroll up when there is keyboard // not needed yet
-///set OK key as send
-/// no connection on startgame, 
-/// awol message shouldn't be sent always
-/// board pref
-///reposition dialog in GameUI
-///lock pieces when arrBoard is sent
-///prioritize dialog (when there is open) before back button
-///check board if exists
-///when disconnected from ingame, check events on chat and board
-/// persist (not much) user login when no internet
-///create handshake for broadcastRoom
-///check challenge response time should be CC // this is when challenge is received but no reponse
-///halt sending when not connected CC
-///decline on server
-///onexitApp is not working
-
 
 var broadcast = function(data) {
 	var keys = Object.keys(clients);
@@ -102,6 +69,8 @@ var reconClient = function(socket, id){
 	var client = clients[id.trim()];
 	if(client && !client.socket) 
 		client.socket = socket;
+	else
+		console.log("not found on clients list");
 	return client;
 }
 
@@ -248,11 +217,6 @@ server.on("connection", function (socket) {
 				client.room = ""; //client.room deleted;
 				broadcastRoom(sendInfo);
 				break;
-			// case "pull": //means out//no one uses still
-				// var client = reconClient(socket, sid);
-				// if (!client) return;
-				// broadcast("pull|"+sid);
-				// break;
 			case "push": //back in to available
 				var client = reconClient(socket, sid);
 				if (!client) return;
@@ -270,7 +234,6 @@ server.on("connection", function (socket) {
 				console.log(msgQueue[client.room]);
 				if (msgQueue[client.room]&&msgQueue[client.room].length > 0)
 					msgQueue[client.room].splice(0,1);
-				//var origSndr = msgQueue[client.room][0].sndr;
 				switch (data[2].trim()){
 					case "challenge":
 						broadcast("pull|"+sid);
@@ -282,7 +245,6 @@ server.on("connection", function (socket) {
 					case "decline":
 						client.room = "";
 						broadcast("push|"+sid);
-						//broadcast("push|"+origSndr);
 						break;
 					case "move"://special case
 						var sendInfo = {
@@ -391,7 +353,5 @@ server.listen(3000, function () {
     console.log("server listening to %j", server.address());
 	
 });
-// require('dns').lookup(require('os').hostname(), function (err, add, fam) {
-  // console.log('addr: '+add);
-// })
+
 setInterval(processQueue, ms); 

@@ -68,7 +68,7 @@ var reconClient = function(socket, id){
 	socket.id = id;
 	var client = clients[id.trim()];
 	if(client) {
-		if(!client.socket) 
+		//if(!client.socket) 
 			client.socket = socket;		
 	}
 	else

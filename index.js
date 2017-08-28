@@ -26,7 +26,7 @@ var broadcastRoom = function(obj){
 		msg: obj.msg,
 		ctr: 0
 	});
-	console.log(msgQueue);
+	//console.log(msgQueue);
 }
 
 var processQueue = function(){
@@ -39,7 +39,7 @@ var processQueue = function(){
 		var senderId = q.sndr.trim();
 		if(q.rcvr){
 			var c = clients[q.rcvr.trim()];
-			console.log("rcvr name: "+q.name+"\nctr: "+q.ctr);
+			//console.log("rcvr name: "+q.name+"\nctr: "+q.ctr);
 			var msg = q.msg ? q.msg.trim() : "";
 			if(c && c.socket){
 				if(keys[i] == c.room){
@@ -52,7 +52,7 @@ var processQueue = function(){
 				else
 					delete msgQueue[keys[i]]; //lepp bantayan, i may do i--
 			} else{
-				console.log("did not write");
+				//console.log("did not write");
 			}
 		} else console.log("no rcvr on queue: "+ q.ctr);
 		if (q.ctr > (1000/ms)*120) { //after 120 sec
@@ -235,8 +235,6 @@ server.on("connection", function (socket) {
 			case "conf": //id, orig event // only for confirming msg is rcvd, not for actual response/event				
 				var client = reconClient(socket, sid);
 				if (!client) return;
-				console.log("client.room: " + client.room);
-				console.log(msgQueue[client.room]);
 				if (msgQueue[client.room]&&msgQueue[client.room].length > 0)
 					msgQueue[client.room].splice(0,1);
 				switch (data[2].trim()){

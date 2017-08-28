@@ -42,8 +42,13 @@ var processQueue = function(){
 			console.log("rcvr name: "+q.name+"\nctr: "+q.ctr);
 			var msg = q.msg ? q.msg.trim() : "";
 			if(c && c.socket){
-				if(keys[i] == c.room)
+				if(keys[i] == c.room){
+					if (q.ev == "move")
+						c.tick = Date.now();
+					else if (q.ev == "timer")
+						msg = Date.now() - msg;
 					c.socket.write(q.ev+"|"+senderId+"|"+q.name+"|"+keys[i]+"|"+msg+"+");
+				}
 				else
 					delete msgQueue[keys[i]]; //lepp bantayan, i may do i--
 			} else{
@@ -253,7 +258,7 @@ server.on("connection", function (socket) {
 							"room": client.room,
 							"rcvr": client.rcvr,
 							"name": "", //sndr name
-							"msg": data[3]
+							"msg": client.tick
 						};
 						broadcastRoom(sendInfo);
 						break;

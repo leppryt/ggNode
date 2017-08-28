@@ -40,13 +40,13 @@ var processQueue = function(){
 		if(q.rcvr){
 			var c = clients[q.rcvr.trim()];
 			//console.log("rcvr name: "+q.name+"\nctr: "+q.ctr);
-			var msg = q.msg ? q.msg.trim() : "";
 			if(c && c.socket){
 				if(keys[i] == c.room){
+					var msg = q.msg;
 					if (q.ev == "move")
 						c.tick = Date.now();
 					else if (q.ev == "timer")
-						msg = Date.now() - msg;
+						msg = Date.now() - q.msg;
 					c.socket.write(q.ev+"|"+senderId+"|"+q.name+"|"+keys[i]+"|"+msg+"+");
 				}
 				else

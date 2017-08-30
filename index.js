@@ -235,9 +235,21 @@ server.on("connection", function (socket) {
 			case "conf": //id, orig event // only for confirming msg is rcvd, not for actual response/event				
 				var client = reconClient(socket, sid);
 				if (!client) return;
-				if (msgQueue[client.room]&&msgQueue[client.room].length > 0)
-					msgQueue[client.room].splice(0,1);
-				switch (data[2].trim()){
+				var origEv = data[2].trim();
+				if (msgQueue[client.room]&&msgQueue[client.room].length > 0) {				
+					if (origEv != "timer")
+						msgQueue[client.room].splice(0,1);
+					else { //because many timers are sent make sure
+						var len = msgQueue[client.room].length;
+						for(var i = 0; i < len; i++){
+							if (msgQueue[client.room][i].ev == origEv) {
+								msgQueue[client.room].splice(i,1);
+								i = len;
+							}
+						}
+					}
+				}
+				switch (origEv){
 					case "challenge":
 						broadcast("pull|"+sid);
 						break;

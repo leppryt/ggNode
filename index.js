@@ -300,8 +300,12 @@ server.on("connection", function (socket) {
 					client.room="";
 				}
 				break;
-			case "ping":
+			case "p":
 				reconClient(socket, sid);
+				break;
+			case "pr":
+				var client = reconClient(socket, sid);
+				client.socket.write("p|");
 				break;
 			default:
 				console.log("No recognizable code");

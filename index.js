@@ -254,10 +254,14 @@ server.on("connection", function (socket) {
 						broadcast("pull|"+sid);
 						break;
 					case "quit":
+						if(msgQueue[client.room])
+							delete msgQueue[client.room];
 						client.room = "";
 						broadcast("push|"+sid);
 						break;
 					case "decline":
+						if(msgQueue[client.room])
+							delete msgQueue[client.room];
 						client.room = "";
 						broadcast("push|"+sid);
 						break;
@@ -305,6 +309,8 @@ server.on("connection", function (socket) {
 				break;
 			case "pr":
 				var client = reconClient(socket, sid);
+				if(!client) return;
+				if(!client.socket) return;
 				client.socket.write("p|");
 				break;
 			default:

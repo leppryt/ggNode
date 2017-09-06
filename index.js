@@ -39,7 +39,6 @@ var processQueue = function(){
 		var senderId = q.sndr.trim();
 		if(q.rcvr){
 			var c = clients[q.rcvr.trim()];
-			//console.log("rcvr name: "+q.name+"\nctr: "+q.ctr);
 			if(c && c.socket){
 				if(keys[i] == c.room){
 					var msg = q.msg;
@@ -82,10 +81,11 @@ var reconClient = function(socket, id){
 server.on("connection", function (socket) {
     var remoteAddress = socket.remoteAddress + ":" + socket.remotePort;
     socket.on("data", function (d) {
-        console.log("Data: %s", d);
 		var data = d.toString().split("|");
 		if (!data[1]) return;
 		var sid = data[1].trim();
+		if(data[0] == "pr" || data[0] == "p")
+			console.log("Data: %s", d);
 		switch(data[0]){
 			case "login"://id, username
 				socket.id = sid;
@@ -323,7 +323,6 @@ server.on("connection", function (socket) {
 		if (!socket.id) return;
 		var sid = socket.id.trim();
 		broadcast("pull|"+sid);
-        console.log("Connection from %s closed", sid);
 		var client = clients[sid];
 		if (!client) return;
 		if(!client.remove) {
@@ -367,8 +366,6 @@ server.on("connection", function (socket) {
 					broadcastRoom(sendInfo);//no need to delete room because goodbye
 				}
 				delete clients[sid].socket;
-				if(!clients[sid].socket)
-					console.log("deleted");
 			}
     });
 

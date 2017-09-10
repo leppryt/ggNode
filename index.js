@@ -35,7 +35,10 @@ var processQueue = function(){
 	for(var i = 0; i < len; i++){
 		var q = msgQueue[keys[i]][0];
 		if(!q) continue; //nothing on queue.. na na na nothin' on queue babe
-		q.ctr++;
+		if (q.ctr % 5 == 0) //process only after 5 chickens
+			q.ctr++;
+		else
+		{ q.ctr++; continue; }
 		var senderId = q.sndr.trim();
 		if(q.rcvr){
 			var c = clients[q.rcvr.trim()];
@@ -84,7 +87,7 @@ server.on("connection", function (socket) {
 		var data = d.toString().split("|");
 		if (!data[1]) return;
 		var sid = data[1].trim();
-		if(data[0] == "pr" || data[0] == "p")
+		if(!(data[0] == "pr" || data[0] == "p"))
 			console.log("Data: %s", d);
 		switch(data[0]){
 			case "login"://id, username

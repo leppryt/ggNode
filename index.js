@@ -77,7 +77,7 @@ var reconClient = function(socket, id){
 	if(client)
 		client.socket = socket;		
 	else
-		console.log("not found on clients list");
+		console.log("not found on clients list", id);
 	return client;
 }
 

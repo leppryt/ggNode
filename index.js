@@ -64,7 +64,7 @@ var processQueue = function(){
 					c.socket.write("awol|No feedback from user.+");
 					c.room="";
 				}
-				broadcast("push|"+senderId);
+				broadcast("push|"+senderId + "|" + c.username);
 			}
 			delete msgQueue[keys[i]];
 		}
@@ -102,6 +102,18 @@ server.on("connection", function (socket) {
 						"socket": socket
 					};
 					broadcast("logSuccess|"+ sid+ "|"+ data[2]);
+					var avail = "";
+					
+					var keys = Object.keys(clients);
+					var len = keys.length;
+					for(var i = 0; i < len; i++){
+						var c = clients[keys[i]];
+						if(c.socket && !(c.room) && c.id!=sid){
+							avail+=c.id+"#"+c.username+",";
+						}
+					}
+					if(avail!="")
+						socket.write("avail|"+avail+"+");
 					break;
 				case "chat"://id, msg
 					var client = reconClient(socket, sid);
@@ -192,7 +204,7 @@ server.on("connection", function (socket) {
 				case "decline"://id, rcvr
 					var client = reconClient(socket, sid);
 					if (!client) return;
-					broadcast("push|"+sid);
+					broadcast("push|"+sid + "|" + client.username);
 					var rcvr = clients[data[2].trim()];
 					if (rcvr){
 						var sendInfo = {
@@ -215,7 +227,7 @@ server.on("connection", function (socket) {
 				case "quit": //id
 					var client = reconClient(socket, sid);
 					if (!client) return;
-					broadcast("push|"+sid);
+					broadcast("push|"+sid + "|" + client.username);
 					var sendInfo = {
 						"ev": data[0],
 						"sndr": sid,
@@ -230,7 +242,7 @@ server.on("connection", function (socket) {
 				case "push": //back in to available
 					var client = reconClient(socket, sid);
 					if (!client) return;
-					broadcast("push|"+sid);
+					broadcast("push|"+sid + "|" + client.username);
 					break;
 				case "exitApp":
 					var client = reconClient(socket, sid);
@@ -262,13 +274,13 @@ server.on("connection", function (socket) {
 							if(msgQueue[client.room])
 								delete msgQueue[client.room];
 							client.room = "";
-							broadcast("push|"+sid);
+							broadcast("push|"+sid + "|" + client.username);
 							break;
 						case "decline":
 							if(msgQueue[client.room])
 								delete msgQueue[client.room];
 							client.room = "";
-							broadcast("push|"+sid);
+							broadcast("push|"+sid + "|" + client.username);
 							break;
 						case "move"://special case
 							var sendInfo = {
@@ -286,15 +298,15 @@ server.on("connection", function (socket) {
 				case "cancel"://id, room, myuserid:recvr
 					//challenger cancelled request
 					var client = reconClient(socket, sid);
-					broadcast("push|"+sid);
 					if (!client) return;
+					broadcast("push|"+sid + "|" + client.username);
 					if(client.room){
 						delete msgQueue[client.room];
 						client.room="";
 					}
 					var rcvr = clients[data[3].trim()];
 					if(rcvr && rcvr.socket){
-						broadcast("push|"+data[3].trim());
+						broadcast("push|"+data[3].trim() + "|" + rcvr.username);
 						rcvr.room="";
 						rcvr.socket.write("cancel|"+data[3].trim()+"+");
 					}
@@ -302,7 +314,7 @@ server.on("connection", function (socket) {
 				case "end":
 					var client = reconClient(socket, sid);
 					if (!client) return;
-					broadcast("push|"+sid);
+					broadcast("push|"+sid + "|" + client.username);
 					if(client.room){
 						if (msgQueue[client.room])
 							delete msgQueue[client.room];

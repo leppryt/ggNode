@@ -61,7 +61,7 @@ var processQueue = function(){
 			var c = clients[senderId];//return to sender
 			if(c && c.socket){
 				if(c.room && c.room == keys[i]){
-					c.socket.write("awol|No feedback from user."+"+");
+					c.socket.write("awol|No feedback from user.+");
 					c.room="";
 				}
 				broadcast("push|"+senderId);
@@ -84,242 +84,249 @@ var reconClient = function(socket, id){
 server.on("connection", function (socket) {
     var remoteAddress = socket.remoteAddress + ":" + socket.remotePort;
     socket.on("data", function (d) {
-		var data = d.toString().split("|");
-		if (!data[1]) return;
-		var sid = data[1].trim();
-		if(!(data[0] == "pr" || data[0] == "p"))
-			console.log("Data: %s", d);
-		switch(data[0]){
-			case "login"://id, username
-				socket.id = sid;
-				clients[sid] = {
-					"id": sid,
-					"username": data[2].trim(),
-					"room": "",
-					"remove": false,
-					"socket": socket
-				};
-				broadcast("logSuccess|"+ sid+ "|"+ data[2]);
-				break;
-			case "chat"://id, msg
-				var client = reconClient(socket, sid);
-				if (!client) return;
-				broadcast("chat|"+client.id+"|"+client.username+"|"+data[2]);
-				client.room = "";
-				break;
-			case "move"://id, msg
-				var client = reconClient(socket, sid);
-				if (!client) return;
-				var sendInfo = {
-					"ev": data[0],
-					"sndr": sid,
-					"room": client.room,
-					"rcvr": client.rcvr,
-					"name": client.username, //sndr name
-					"msg": data[2]
-				};
-				broadcastRoom(sendInfo);
-				break;
-			case "pm"://id, msg
-				var client = reconClient(socket, sid);
-				if (!client) return;
-				var sendInfo = {
-					"ev": data[0],
-					"sndr": sid,
-					"room": client.room,
-					"rcvr": client.rcvr,
-					"name": client.username, //sndr name
-					"msg": data[2]
-				};
-				broadcastRoom(sendInfo);
-				break;
-			case "arrBoard"://id, msg
-				var client = reconClient(socket, sid);
-				if (!client) return;
-				var sendInfo = {
-					"ev": data[0],
-					"sndr": sid,
-					"room": client.room,
-					"rcvr": client.rcvr,
-					"name": client.username, //sndr name
-					"msg": data[2]
-				};
-				broadcastRoom(sendInfo);
-				break;
-			case "challenge"://id, room, myuserid:recvr
-				var client = reconClient(socket, sid);
-				if (!client) return;
-				broadcast("pull|"+sid);
-				var rcvr = clients[data[3].trim()];
-				if (rcvr){//make sure user is still available
-					client.room = data[2];
-					rcvr.room = data[2];
-					var sendInfo = {
-						"ev": data[0],
-						"sndr": sid,
-						"room": data[2],
-						"rcvr": data[3],
-						"name": client.username, //sndr name
-						"msg": ""
+		var loops = d.toString().split("+");
+		var data;
+		for(var j = 0; j < loops.length-1; j++){
+			data = loops[j].split("|");
+			var sid = data[1].trim();
+			if(!(data[0] == "pr" || data[0] == "p"))
+				console.log("Data: %s", d);
+			switch(data[0]){
+				case "login"://id, username
+					socket.id = sid;
+					clients[sid] = {
+						"id": sid,
+						"username": data[2].trim(),
+						"room": "",
+						"remove": false,
+						"socket": socket
 					};
-					broadcastRoom(sendInfo);
-				} else{
-					socket.write("awol|User not available."+"+");
-				}
-				break;
-			case "accept"://id, rcvr
-				var client = reconClient(socket, sid);
-				if (!client) return;
-				broadcast("pull|"+sid);
-				var rcvr = clients[data[2].trim()];
-				if (rcvr){
+					broadcast("logSuccess|"+ sid+ "|"+ data[2]);
+					break;
+				case "chat"://id, msg
+					var client = reconClient(socket, sid);
+					if (!client) return;
+					broadcast("chat|"+client.id+"|"+client.username+"|"+data[2]);
+					client.room = "";
+					break;
+				case "move"://id, msg
+					var client = reconClient(socket, sid);
+					if (!client) return;
 					var sendInfo = {
 						"ev": data[0],
 						"sndr": sid,
 						"room": client.room,
-						"rcvr": data[2],
+						"rcvr": client.rcvr,
 						"name": client.username, //sndr name
-						"msg": ""
+						"msg": data[2]
 					};
-					client.rcvr = data[2];
-					rcvr.rcvr = sid;
 					broadcastRoom(sendInfo);
-				} else
-					socket.write("awol|User not available."+"+");
-				break;
-			case "decline"://id, rcvr
-				var client = reconClient(socket, sid);
-				if (!client) return;
-				broadcast("push|"+sid);
-				var rcvr = clients[data[2].trim()];
-				if (rcvr){
+					break;
+				case "pm"://id, msg
+					var client = reconClient(socket, sid);
+					if (!client) return;
 					var sendInfo = {
 						"ev": data[0],
 						"sndr": sid,
 						"room": client.room,
-						"rcvr": data[2],
+						"rcvr": client.rcvr,
+						"name": client.username, //sndr name
+						"msg": data[2]
+					};
+					broadcastRoom(sendInfo);
+					break;
+				case "arrBoard"://id, msg
+					var client = reconClient(socket, sid);
+					if (!client) return;
+					var sendInfo = {
+						"ev": data[0],
+						"sndr": sid,
+						"room": client.room,
+						"rcvr": client.rcvr,
+						"name": client.username, //sndr name
+						"msg": data[2]
+					};
+					broadcastRoom(sendInfo);
+					break;
+				case "challenge"://id, room, myuserid:recvr
+					var client = reconClient(socket, sid);
+					if (!client) return;
+					broadcast("pull|"+sid);
+					var rcvr = clients[data[3].trim()];
+					if (rcvr){//make sure user is still available
+						client.room = data[2];
+						rcvr.room = data[2];
+						var sendInfo = {
+							"ev": data[0],
+							"sndr": sid,
+							"room": data[2],
+							"rcvr": data[3],
+							"name": client.username, //sndr name
+							"msg": ""
+						};
+						broadcastRoom(sendInfo);
+					} else{
+						socket.write("awol|User not available.+");
+					}
+					break;
+				case "accept"://id, rcvr
+					var client = reconClient(socket, sid);
+					if (!client) return;
+					broadcast("pull|"+sid);
+					var rcvr = clients[data[2].trim()];
+					if (rcvr){
+						var sendInfo = {
+							"ev": data[0],
+							"sndr": sid,
+							"room": client.room,
+							"rcvr": data[2],
+							"name": client.username, //sndr name
+							"msg": ""
+						};
+						client.rcvr = data[2];
+						rcvr.rcvr = sid;
+						broadcastRoom(sendInfo);
+					} else
+						socket.write("awol|User not available.+");
+					break;
+				case "decline"://id, rcvr
+					var client = reconClient(socket, sid);
+					if (!client) return;
+					broadcast("push|"+sid);
+					var rcvr = clients[data[2].trim()];
+					if (rcvr){
+						var sendInfo = {
+							"ev": data[0],
+							"sndr": sid,
+							"room": client.room,
+							"rcvr": data[2],
+							"name": client.username, //sndr name
+							"msg": ""
+						};
+						broadcastRoom(sendInfo);
+						client.room = ""; //lepp bantayan
+					}
+					break;
+				case "timeout":
+					var client = reconClient(socket, sid);
+					if (!client) return;
+					broadcastRoom("timeout|"+client.username,client.room,sid);
+					break;
+				case "quit": //id
+					var client = reconClient(socket, sid);
+					if (!client) return;
+					broadcast("push|"+sid);
+					var sendInfo = {
+						"ev": data[0],
+						"sndr": sid,
+						"room": client.room,
+						"rcvr": client.rcvr,
 						"name": client.username, //sndr name
 						"msg": ""
 					};
+					client.room = ""; //client.room deleted;
 					broadcastRoom(sendInfo);
-					client.room = ""; //lepp bantayan
-				}
-				break;
-			case "timeout":
-				var client = reconClient(socket, sid);
-				if (!client) return;
-				broadcastRoom("timeout|"+client.username,client.room,sid);
-				break;
-			case "quit": //id
-				var client = reconClient(socket, sid);
-				if (!client) return;
-				broadcast("push|"+sid);
-				var sendInfo = {
-					"ev": data[0],
-					"sndr": sid,
-					"room": client.room,
-					"rcvr": client.rcvr,
-					"name": client.username, //sndr name
-					"msg": ""
-				};
-				client.room = ""; //client.room deleted;
-				broadcastRoom(sendInfo);
-				break;
-			case "push": //back in to available
-				var client = reconClient(socket, sid);
-				if (!client) return;
-				broadcast("push|"+sid);
-				break;
-			case "exitApp":
-				var client = reconClient(socket, sid);
-				if (!client) return;
-				client.remove = true;
-				break;
-			case "conf": //id, orig event // only for confirming msg is rcvd, not for actual response/event				
-				var client = reconClient(socket, sid);
-				if (!client) return;
-				var origEv = data[2].trim();
-				if (msgQueue[client.room]&&msgQueue[client.room].length > 0) {				
-					if (origEv != "timer")
-						msgQueue[client.room].splice(0,1);
-					else { //because many timers are sent make sure
-						var len = msgQueue[client.room].length;
-						for(var i = 0; i < len; i++){
-							if (msgQueue[client.room][i].ev == origEv) {
-								msgQueue[client.room].splice(i,1);
-								i = len;
+					break;
+				case "push": //back in to available
+					var client = reconClient(socket, sid);
+					if (!client) return;
+					broadcast("push|"+sid);
+					break;
+				case "exitApp":
+					var client = reconClient(socket, sid);
+					if (!client) return;
+					client.remove = true;
+					break;
+				case "conf": //id, orig event // only for confirming msg is rcvd, not for actual response/event				
+					var client = reconClient(socket, sid);
+					if (!client) return;
+					var origEv = data[2].trim();
+					if (msgQueue[client.room]&&msgQueue[client.room].length > 0) {				
+						if (origEv != "timer")
+							msgQueue[client.room].splice(0,1);
+						else { //because many timers are sent make sure
+							var len = msgQueue[client.room].length;
+							for(var i = 0; i < len; i++){
+								if (msgQueue[client.room][i].ev == origEv) {
+									msgQueue[client.room].splice(i,1);
+									i = len;
+								}
 							}
 						}
 					}
-				}
-				switch (origEv){
-					case "challenge":
-						broadcast("pull|"+sid);
-						break;
-					case "quit":
-						if(msgQueue[client.room])
-							delete msgQueue[client.room];
-						client.room = "";
-						broadcast("push|"+sid);
-						break;
-					case "decline":
-						if(msgQueue[client.room])
-							delete msgQueue[client.room];
-						client.room = "";
-						broadcast("push|"+sid);
-						break;
-					case "move"://special case
-						var sendInfo = {
-							"ev": "timer",
-							"sndr": sid,
-							"room": client.room,
-							"rcvr": client.rcvr,
-							"name": "", //sndr name
-							"msg": client.tick
-						};
-						broadcastRoom(sendInfo);
-						break;
-				}
-				break;
-			case "cancel"://id, room, myuserid:recvr
-				//challenger cancelled request
-				var client = reconClient(socket, sid);
-				broadcast("push|"+sid);
-				if (!client) return;
-				if(client.room){
-					delete msgQueue[client.room];
-					client.room="";
-				}
-				var rcvr = clients[data[3].trim()];
-				if(rcvr && rcvr.socket){
-					broadcast("push|"+data[3].trim());
-					rcvr.room="";
-					rcvr.socket.write("cancel|"+data[3].trim()+"+");
-				}
-				break;
-			case "end":
-				var client = reconClient(socket, sid);
-				if (!client) return;
-				broadcast("push|"+sid);
-				if(client.room){
-					if (msgQueue[client.room])
+					switch (origEv){
+						case "challenge":
+							broadcast("pull|"+sid);
+							break;
+						case "quit":
+							if(msgQueue[client.room])
+								delete msgQueue[client.room];
+							client.room = "";
+							broadcast("push|"+sid);
+							break;
+						case "decline":
+							if(msgQueue[client.room])
+								delete msgQueue[client.room];
+							client.room = "";
+							broadcast("push|"+sid);
+							break;
+						case "move"://special case
+							var sendInfo = {
+								"ev": "timer",
+								"sndr": sid,
+								"room": client.room,
+								"rcvr": client.rcvr,
+								"name": "", //sndr name
+								"msg": client.tick
+							};
+							broadcastRoom(sendInfo);
+							break;
+					}
+					break;
+				case "cancel"://id, room, myuserid:recvr
+					//challenger cancelled request
+					var client = reconClient(socket, sid);
+					broadcast("push|"+sid);
+					if (!client) return;
+					if(client.room){
 						delete msgQueue[client.room];
-					client.room="";
-				}
-				break;
-			case "p":
-				reconClient(socket, sid);
-				break;
-			case "pr":
-				var client = reconClient(socket, sid);
-				if(!client) return;
-				if(!client.socket) return;
-				client.socket.write("p|");
-				break;
-			default:
-				console.log("No recognizable code");
-				break;
+						client.room="";
+					}
+					var rcvr = clients[data[3].trim()];
+					if(rcvr && rcvr.socket){
+						broadcast("push|"+data[3].trim());
+						rcvr.room="";
+						rcvr.socket.write("cancel|"+data[3].trim()+"+");
+					}
+					break;
+				case "end":
+					var client = reconClient(socket, sid);
+					if (!client) return;
+					broadcast("push|"+sid);
+					if(client.room){
+						if (msgQueue[client.room])
+							delete msgQueue[client.room];
+						client.room="";
+					}
+					break;
+				case "p":
+					reconClient(socket, sid);
+					break;
+				case "pr":
+					var client = reconClient(socket, sid);
+					if(!client) return;
+					if(!client.socket) return;
+					client.socket.write("p|p+");
+					break;
+				default:
+					console.log("No recognizable code");
+					break;
+			}
 		}
+		
+		// var data = d.toString().split("|");
+		// if (!data[1]) return;
+		
     });
 
     socket.once("close", function () {//get "event interrupted"
